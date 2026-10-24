@@ -1,0 +1,44 @@
+# Artefatos de build
+**/bin/
+**/obj/
+**/out/
+**/publish/
+**/TestResults/
+**/coverage*/
+*.efbundle
+efbundle*
+
+# Testes e orquestracao local (nao vao para a imagem da API)
+tests/
+src/Authentication.AppHost/
+
+# IDEs e editores
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.swp
+*.DotSettings.user
+
+# Controle de versao e CI
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Segredos e configuracoes locais
+**/secrets.json
+**/*.pfx
+**/*.pem
+**/*.key
+.env
+.env.*
+**/appsettings.Local.json
+
+# Docker / docs / ferramentas locais
+**/Dockerfile*
+.dockerignore
+**/*.http
+*.md
+.config/

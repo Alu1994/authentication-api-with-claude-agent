@@ -1,0 +1,31 @@
+# Build
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+publish/
+*.efbundle
+efbundle*
+
+# Testes / cobertura
+TestResults/
+coverage*/
+*.coverage
+*.cobertura.xml
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.DotSettings.user
+
+# Segredos / configuracoes locais
+.env
+.env.*
+**/appsettings.Local.json
+*.pfx
+
+# Rascunho local do agente (memoria de execucao e relatorios de cobertura)
+.claude/epics/
+.claude/reports/
