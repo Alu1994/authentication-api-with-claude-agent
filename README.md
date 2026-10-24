@@ -1,10 +1,11 @@
 # Authentication
 
 Servico de identidade reutilizavel: cadastro de usuarios (CRUD com soft delete), catalogo de permissoes,
-roles que agrupam permissoes e emissao de JWT. Pensado para ser consumido por varios sistemas, sem regras
-especificas de um frontend.
+roles que agrupam permissoes, atribuicao de roles a usuarios e emissao de JWT com as roles e permissoes do
+usuario. Pensado para ser consumido por varios sistemas, sem regras especificas de um frontend.
 
-> Vinculo usuario/role, claims de autorizacao no JWT e auditoria estao em construcao nas proximas historias.
+> A checagem de permissoes nos proprios endpoints desta API (enforcement) e a auditoria ficam para as
+> proximas historias.
 
 ## Stack
 
@@ -24,7 +25,7 @@ Tres camadas, com CQRS sem dispatcher (cada Command/Query tem seu handler injeta
 ```
 src/
   Authentication.Api              Presentation: endpoints, contratos HTTP, JWT bearer, OpenAPI, health checks
-  Authentication.Application      Entidades (User, Permission, Role), Commands/Queries + Handlers, regras de validacao, portas
+  Authentication.Application      Entidades (User, Permission, Role e vinculos), Commands/Queries + Handlers, regras de validacao, portas
   Authentication.Infrastructure   EF Core/PostgreSQL, repositorios, migrations, hasher de senha, emissao de JWT
 aspire/
   Authentication.ServiceDefaults  OpenTelemetry, health checks base, service discovery, resiliencia HTTP
@@ -46,7 +47,7 @@ Exemplos de requisicao prontos em [`src/Authentication.Api/Authentication.Api.ht
 Os health checks (`/heartbeat` e `/healthcheck`) estao descritos em [Docker](#docker).
 
 > Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer usuario e gerenciar
-> permissoes e roles. A restricao por permissao sera feita em uma historia propria de enforcement.
+> permissoes e roles, inclusive atribuir qualquer role a si mesmo (risco aceito ate a historia de enforcement). A restricao por permissao sera feita em uma historia propria de enforcement.
 
 ## Proposta e principais decisoes
 
@@ -70,8 +71,11 @@ Algumas decisoes de produto orientam o comportamento:
   muda depois de criada (so e criada ou excluida), e a exclusao tambem e logica, liberando o mesmo par para
   ser recriado.
 - **Roles como agrupamento:** roles reunem permissoes sob um nome unico e podem ser editadas livremente.
-  Uma permissao em uso por alguma role nao pode ser excluida, evitando que roles percam acessos sem
-  que alguem perceba.
+  Uma permissao em uso por alguma role, ou uma role atribuida a algum usuario, nao pode ser excluida,
+  evitando que acessos sumam sem que alguem perceba.
+- **Autorizacao no token:** o login inclui no JWT as roles do usuario e as permissoes dessas roles, para que
+  os sistemas consumidores decidam o acesso sem consultar esta API a cada requisicao. Por isso, mudancas em
+  roles e permissoes so passam a valer no proximo login; tokens ja emitidos seguem validos ate expirar.
 
 O detalhe de campos, validacoes, contratos e limites fica no codigo, na configuracao, nas migrations e na
 [documentacao da API](#documentacao-da-api).
