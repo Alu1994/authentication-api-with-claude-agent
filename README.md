@@ -62,30 +62,11 @@ Algumas decisoes de produto orientam o comportamento:
 - **Senha sob responsabilidade da API:** a senha e armazenada apenas como hash forte, e a troca exige a
   senha atual.
 - **Login resistente a abuso:** a resposta de falha nao revela se o e-mail existe (nem pelo conteudo, nem
-  pelo tempo de resposta), e as tentativas sao limitadas por IP (ver [Rate limiting do login](#rate-limiting-do-login)).
+  pelo tempo de resposta), e o numero de tentativas de login por IP e limitado, de forma configuravel,
+  para mitigar forca bruta e credential stuffing.
 
-O detalhe de campos, validacoes e contratos fica no codigo, nas migrations e na
+O detalhe de campos, validacoes, contratos e limites fica no codigo, na configuracao, nas migrations e na
 [documentacao da API](#documentacao-da-api).
-
-## Rate limiting do login
-
-`POST /auth/login` usa o rate limiting nativo do ASP.NET Core (`Microsoft.AspNetCore.RateLimiting`),
-aplicado **somente** a esse endpoint:
-
-- **Algoritmo:** janela fixa (*fixed window*) particionada por IP do cliente. Padrao de **5 tentativas a cada
-  60 segundos** por IP, contando sucessos e falhas, sem fila.
-- **Resposta ao exceder:** `429 Too Many Requests` em `ProblemDetails` (`code: auth.rate_limited`) e header
-  `Retry-After` com os segundos ate a proxima janela.
-- **Por que janela fixa:** e simples e previsivel para o cliente (o `Retry-After` e exato), e o limite e
-  baixo o bastante para tornar inviavel forca bruta ou credential stuffing a partir de um IP. Se o pico na
-  virada da janela (ate 2x o limite em sequencia) virar problema, a troca para *sliding window* e local
-  em `Security/LoginRateLimiting.cs`.
-- **Escopo:** o contador e por instancia (em memoria). Com N replicas, o limite efetivo por IP e de ate N x o
-  configurado. Um limite global exigiria um store distribuido (ex.: Redis) ou o rate limit do API Gateway/WAF.
-- **IP real atras de proxy:** em EKS/ECS (ALB/ingress) o `RemoteIpAddress` e o do balanceador. Defina
-  `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` para que o ASP.NET Core use o `X-Forwarded-For`. Sem isso,
-  todos os clientes compartilham o mesmo limite. Essa opcao confia no header enviado pelo proxy: garanta
-  que a API so seja acessivel atraves dele.
 
 ## Configuracao
 
