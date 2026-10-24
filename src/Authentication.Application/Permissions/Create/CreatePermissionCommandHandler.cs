@@ -1,6 +1,7 @@
 using Authentication.Application.Abstractions.Messaging;
 using Authentication.Application.Abstractions.Persistence;
 using Authentication.Application.Abstractions.Results;
+using Authentication.Application.Abstractions.Validation;
 using Authentication.Application.Permissions.Validation;
 using Microsoft.Extensions.Logging;
 
@@ -23,8 +24,7 @@ public sealed partial class CreatePermissionCommandHandler(
         var errors = new ValidationErrorCollector()
             .AddIf(!PermissionRules.IsValidSegment(resource), "resource", PermissionRules.SegmentFormatMessage)
             .AddIf(!PermissionRules.IsValidSegment(action), "action", PermissionRules.SegmentFormatMessage)
-            .AddIf(!PermissionRules.IsValidDescription(description), "description",
-                $"A descricao deve ter no maximo {PermissionRules.DescriptionMaxLength} caracteres.");
+            .AddIf(!PermissionRules.IsValidDescription(description), "description", DescriptionRules.TooLongMessage);
 
         if (errors.HasErrors)
         {

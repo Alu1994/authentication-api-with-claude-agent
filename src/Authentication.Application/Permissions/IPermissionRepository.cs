@@ -20,6 +20,12 @@ public interface IPermissionRepository
         string? action,
         CancellationToken cancellationToken);
 
+    /// <summary>Indica se a permissao esta vinculada a alguma role ativa (nao excluida).</summary>
+    Task<bool> IsLinkedToActiveRoleAsync(Guid permissionId, CancellationToken cancellationToken);
+
+    /// <summary>Dentre os Ids informados, retorna os que correspondem a permissoes ativas.</summary>
+    Task<IReadOnlySet<Guid>> GetActiveIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     void Add(Permission permission);
 
     /// <summary>Persiste as alteracoes.</summary>

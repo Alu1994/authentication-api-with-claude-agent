@@ -7,6 +7,16 @@ using Authentication.Application.Permissions.Create;
 using Authentication.Application.Permissions.Delete;
 using Authentication.Application.Permissions.GetById;
 using Authentication.Application.Permissions.List;
+using Authentication.Application.Roles;
+using Authentication.Application.Roles.Create;
+using Authentication.Application.Roles.Delete;
+using Authentication.Application.Roles.GetById;
+using Authentication.Application.Roles.List;
+using Authentication.Application.Roles.RolePermissions.Add;
+using Authentication.Application.Roles.RolePermissions.List;
+using Authentication.Application.Roles.RolePermissions.Remove;
+using Authentication.Application.Roles.RolePermissions.Replace;
+using Authentication.Application.Roles.Update;
 using Authentication.Application.Users;
 using Authentication.Application.Users.ChangePassword;
 using Authentication.Application.Users.Create;
@@ -41,6 +51,19 @@ public static class DependencyInjection
             GetPermissionByIdQueryHandler>();
         services.AddScoped<IQueryHandler<ListPermissionsQuery, Result<PagedResponse<PermissionResponse>>>,
             ListPermissionsQueryHandler>();
+
+        services.AddScoped<ICommandHandler<CreateRoleCommand, Result<RoleResponse>>, CreateRoleCommandHandler>();
+        services.AddScoped<ICommandHandler<UpdateRoleCommand, Result>, UpdateRoleCommandHandler>();
+        services.AddScoped<ICommandHandler<DeleteRoleCommand, Result>, DeleteRoleCommandHandler>();
+        services.AddScoped<IQueryHandler<GetRoleByIdQuery, Result<RoleResponse>>, GetRoleByIdQueryHandler>();
+        services.AddScoped<IQueryHandler<ListRolesQuery, Result<PagedResponse<RoleResponse>>>, ListRolesQueryHandler>();
+
+        services.AddScoped<ICommandHandler<AddRolePermissionCommand, Result>, AddRolePermissionCommandHandler>();
+        services.AddScoped<ICommandHandler<RemoveRolePermissionCommand, Result>, RemoveRolePermissionCommandHandler>();
+        services.AddScoped<ICommandHandler<ReplaceRolePermissionsCommand, Result>,
+            ReplaceRolePermissionsCommandHandler>();
+        services.AddScoped<IQueryHandler<ListRolePermissionsQuery, Result<IReadOnlyList<PermissionResponse>>>,
+            ListRolePermissionsQueryHandler>();
 
         return services;
     }

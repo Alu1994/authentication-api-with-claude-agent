@@ -64,10 +64,12 @@ internal static class PermissionEndpoints
             .WithSummary("Exclui uma permissao (soft delete)")
             .WithDescription(
                 "Exclusao logica: a permissao deixa de aparecer nas consultas e o mesmo par recurso/acao " +
-                "pode ser criado novamente. " + PermissionNotFoundDescription)
+                "pode ser criado novamente. Retorna 409 enquanto a permissao estiver vinculada a alguma role ativa " +
+                "(desvincule-a antes). " + PermissionNotFoundDescription)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         return app;
     }

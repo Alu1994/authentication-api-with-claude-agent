@@ -1,10 +1,10 @@
 # Authentication
 
-Servico de identidade reutilizavel: cadastro de usuarios (CRUD com soft delete), catalogo de permissoes
-e emissao de JWT. Pensado para ser consumido por varios sistemas, sem regras especificas de um frontend.
+Servico de identidade reutilizavel: cadastro de usuarios (CRUD com soft delete), catalogo de permissoes,
+roles que agrupam permissoes e emissao de JWT. Pensado para ser consumido por varios sistemas, sem regras
+especificas de um frontend.
 
-> Roles, vinculo usuario/role/permissao, claims de autorizacao no JWT e auditoria estao em construcao
-> nas proximas historias.
+> Vinculo usuario/role, claims de autorizacao no JWT e auditoria estao em construcao nas proximas historias.
 
 ## Stack
 
@@ -24,7 +24,7 @@ Tres camadas, com CQRS sem dispatcher (cada Command/Query tem seu handler injeta
 ```
 src/
   Authentication.Api              Presentation: endpoints, contratos HTTP, JWT bearer, OpenAPI, health checks
-  Authentication.Application      Entidades (User, Permission), Commands/Queries + Handlers, regras de validacao, portas
+  Authentication.Application      Entidades (User, Permission, Role), Commands/Queries + Handlers, regras de validacao, portas
   Authentication.Infrastructure   EF Core/PostgreSQL, repositorios, migrations, hasher de senha, emissao de JWT
 aspire/
   Authentication.ServiceDefaults  OpenTelemetry, health checks base, service discovery, resiliencia HTTP
@@ -46,7 +46,7 @@ Exemplos de requisicao prontos em [`src/Authentication.Api/Authentication.Api.ht
 Os health checks (`/heartbeat` e `/healthcheck`) estao descritos em [Docker](#docker).
 
 > Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer usuario e gerenciar
-> permissoes. A restricao por permissao sera feita em uma historia propria de enforcement.
+> permissoes e roles. A restricao por permissao sera feita em uma historia propria de enforcement.
 
 ## Proposta e principais decisoes
 
@@ -69,6 +69,9 @@ Algumas decisoes de produto orientam o comportamento:
   pela propria API, de modo que novos recursos e acoes nao exigem alteracao de codigo. Uma permissao nao
   muda depois de criada (so e criada ou excluida), e a exclusao tambem e logica, liberando o mesmo par para
   ser recriado.
+- **Roles como agrupamento:** roles reunem permissoes sob um nome unico e podem ser editadas livremente.
+  Uma permissao em uso por alguma role nao pode ser excluida, evitando que roles percam acessos sem
+  que alguem perceba.
 
 O detalhe de campos, validacoes, contratos e limites fica no codigo, na configuracao, nas migrations e na
 [documentacao da API](#documentacao-da-api).

@@ -12,6 +12,24 @@ internal sealed class PermissionRepository(AuthenticationDbContext context) : IP
     public Task<bool> ExistsAsync(string resource, string action, CancellationToken cancellationToken) =>
         context.Permissions.AnyAsync(p => p.Resource == resource && p.Action == action, cancellationToken);
 
+    // context.Roles aplica o filtro de soft delete: vinculos com roles excluidas nao contam.
+    public Task<bool> IsLinkedToActiveRoleAsync(Guid permissionId, CancellationToken cancellationToken) =>
+        context.RolePermissions.AnyAsync(
+            rp => rp.PermissionId == permissionId && context.Roles.Any(r => r.Id == rp.RoleId),
+            cancellationToken);
+
+    public async Task<IReadOnlySet<Guid>> GetActiveIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken)
+    {
+        var active = await context.Permissions
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => p.Id)
+            .ToListAsync(cancellationToken);
+
+        return active.ToHashSet();
+    }
+
     public async Task<PagedResponse<Permission>> ListAsync(
         int page,
         int pageSize,

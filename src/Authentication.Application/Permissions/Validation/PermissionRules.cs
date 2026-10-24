@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Authentication.Application.Abstractions.Validation;
 
 namespace Authentication.Application.Permissions.Validation;
 
@@ -6,7 +7,7 @@ namespace Authentication.Application.Permissions.Validation;
 public static partial class PermissionRules
 {
     public const int SegmentMaxLength = 50;
-    public const int DescriptionMaxLength = 500;
+    public const int DescriptionMaxLength = DescriptionRules.MaxLength;
 
     public const string SegmentFormatMessage =
         "Deve comecar com letra minuscula e conter de 2 a 50 caracteres entre letras minusculas, digitos, '_' e '-'.";
@@ -18,11 +19,9 @@ public static partial class PermissionRules
     public static bool IsValidSegment(string value) => SegmentRegex().IsMatch(value);
 
     /// <summary>Remove espacos das pontas; descricao em branco vira nula.</summary>
-    public static string? NormalizeDescription(string? description) =>
-        string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+    public static string? NormalizeDescription(string? description) => DescriptionRules.Normalize(description);
 
-    public static bool IsValidDescription(string? description) =>
-        description is null || description.Length <= DescriptionMaxLength;
+    public static bool IsValidDescription(string? description) => DescriptionRules.IsValid(description);
 
     // \z (e nao $) para nao aceitar uma quebra de linha final.
     [GeneratedRegex(@"^[a-z][a-z0-9_-]{1,49}\z", RegexOptions.CultureInvariant)]

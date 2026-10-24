@@ -35,6 +35,10 @@ public sealed class Result<TValue> : Result
         ? _value!
         : throw new InvalidOperationException("Nao e possivel acessar o valor de um resultado com falha.");
 
+    /// <summary>Sucesso explicito, necessario quando <typeparamref name="TValue"/> e uma interface
+    /// (o C# nao permite conversao implicita definida pelo usuario a partir de interfaces).</summary>
+    public static Result<TValue> Success(TValue value) => new(value);
+
     public static implicit operator Result<TValue>(TValue value) => new(value);
 
     public static implicit operator Result<TValue>(Error error) => new(error);

@@ -18,6 +18,12 @@ public sealed partial class DeletePermissionCommandHandler(
             return PermissionErrors.NotFound;
         }
 
+        if (await repository.IsLinkedToActiveRoleAsync(permission.Id, cancellationToken))
+        {
+            LogDeleteRejectedInUse(logger, permission.Id);
+            return PermissionErrors.InUse;
+        }
+
         permission.Delete(timeProvider.GetUtcNow());
         await repository.SaveChangesAsync(cancellationToken);
 
@@ -28,4 +34,8 @@ public sealed partial class DeletePermissionCommandHandler(
     [LoggerMessage(EventId = 3101, Level = LogLevel.Information,
         Message = "Permissao {PermissionId} excluida (soft delete).")]
     private static partial void LogPermissionDeleted(ILogger logger, Guid permissionId);
+
+    [LoggerMessage(EventId = 3102, Level = LogLevel.Warning,
+        Message = "Exclusao da permissao {PermissionId} rejeitada: vinculada a roles ativas.")]
+    private static partial void LogDeleteRejectedInUse(ILogger logger, Guid permissionId);
 }

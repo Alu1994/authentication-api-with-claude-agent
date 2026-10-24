@@ -88,7 +88,64 @@ Authorization: Bearer {{token}}
 GET {{baseUrl}}/permissions?page=1&pageSize=20&resource=users&action=read
 Authorization: Bearer {{token}}
 
-### Excluir permissao (soft delete; o mesmo par pode ser recriado depois)
+### Criar role (nome unico entre as ativas, sem diferenciar maiusculas/minusculas)
+# @name createRole
+POST {{baseUrl}}/roles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Suporte N2",
+  "description": "Atendimento de segundo nivel"
+}
+
+###
+@roleId = {{createRole.response.body.$.id}}
+
+### Consultar role por Id
+GET {{baseUrl}}/roles/{{roleId}}
+Authorization: Bearer {{token}}
+
+### Listar roles (paginado, filtro opcional por trecho do nome)
+GET {{baseUrl}}/roles?page=1&pageSize=20&name=suporte
+Authorization: Bearer {{token}}
+
+### Atualizar role (descricao ausente/em branco remove a atual)
+PUT {{baseUrl}}/roles/{{roleId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Suporte N2",
+  "description": "Atendimento de segundo nivel e escalonamento"
+}
+
+### Vincular permissao a role (idempotente)
+POST {{baseUrl}}/roles/{{roleId}}/permissions/{{permissionId}}
+Authorization: Bearer {{token}}
+
+### Listar permissoes da role
+GET {{baseUrl}}/roles/{{roleId}}/permissions
+Authorization: Bearer {{token}}
+
+### Substituir todas as permissoes da role (tudo ou nada; [] remove todas)
+PUT {{baseUrl}}/roles/{{roleId}}/permissions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "permissionIds": ["{{permissionId}}"]
+}
+
+### Desvincular permissao da role
+DELETE {{baseUrl}}/roles/{{roleId}}/permissions/{{permissionId}}
+Authorization: Bearer {{token}}
+
+### Excluir role (soft delete; o nome pode ser reutilizado)
+DELETE {{baseUrl}}/roles/{{roleId}}
+Authorization: Bearer {{token}}
+
+### Excluir permissao (soft delete; 409 se vinculada a role ativa; o mesmo par pode ser recriado depois)
 DELETE {{baseUrl}}/permissions/{{permissionId}}
 Authorization: Bearer {{token}}
 
