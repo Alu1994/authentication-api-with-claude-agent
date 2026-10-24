@@ -37,22 +37,12 @@ tests/
 Erros de negocio trafegam como `Result`/`Error` (sem excecoes para fluxo esperado) e viram
 `ProblemDetails` (RFC 9457) na API, com o campo `code` (ex.: `user.email_in_use`).
 
-## Endpoints
+## Documentacao da API
 
-| Metodo | Rota | Auth | Descricao | Respostas |
-|---|---|---|---|---|
-| POST | `/auth/login` | publico | Valida e-mail/senha e retorna JWT (com rate limiting) | 200, 400, 401, 429 |
-| POST | `/users` | publico | Auto-registro | 201, 400, 409 |
-| GET | `/users?page=&pageSize=&search=` | Bearer | Lista paginada (padrao 20, max 100), busca por nome/e-mail | 200, 400, 401 |
-| GET | `/users/{id}` | Bearer | Consulta por Id | 200, 401, 404 |
-| PUT | `/users/{id}` | Bearer | Atualiza nome, e-mail, telefone e nascimento (CPF imutavel) | 204, 400, 401, 404, 409 |
-| PUT | `/users/{id}/password` | Bearer | Troca de senha (exige a atual) | 204, 400, 401, 404 |
-| DELETE | `/users/{id}` | Bearer | Soft delete | 204, 401, 404 |
-| GET | `/heartbeat` | publico | Liveness (app de pe) | 200 |
-| GET | `/healthcheck` | publico | Dependencias (PostgreSQL) com detalhe em JSON | 200, 503 |
-| GET | `/openapi/v1.json` / `/scalar/v1` | publico | Documento OpenAPI / UI (todos os ambientes) | 200 |
-
-Exemplos prontos em [`src/Authentication.Api/Authentication.Api.http`](src/Authentication.Api/Authentication.Api.http).
+A referencia dos endpoints (rotas, autenticacao, contratos e codigos de resposta) fica na propria API,
+em todos os ambientes: UI interativa em `/scalar/v1` e documento OpenAPI em `/openapi/v1.json`.
+Exemplos de requisicao prontos em [`src/Authentication.Api/Authentication.Api.http`](src/Authentication.Api/Authentication.Api.http).
+Os health checks (`/heartbeat` e `/healthcheck`) estao descritos em [Docker](#docker).
 
 > Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer outro usuario.
 > A restricao por permissao sera feita na historia de Roles/Permissoes.
