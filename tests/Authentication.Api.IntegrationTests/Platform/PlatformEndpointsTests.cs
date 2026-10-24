@@ -42,6 +42,10 @@ public class PlatformEndpointsTests(ApiFactory factory)
         Assert.True(paths.TryGetProperty("/users", out _));
         Assert.True(paths.TryGetProperty("/users/{id}", out _));
         Assert.True(paths.TryGetProperty("/users/{id}/password", out _));
+        Assert.True(paths.TryGetProperty("/permissions", out _));
+        Assert.True(paths.TryGetProperty("/permissions/{id}", out var permissionById));
+        Assert.False(permissionById.TryGetProperty("put", out _)); // permissao e imutavel
+        Assert.True(permissionById.GetProperty("get").TryGetProperty("security", out _));
         Assert.False(paths.TryGetProperty("/heartbeat", out _));
 
         var schemes = json.RootElement.GetProperty("components").GetProperty("securitySchemes");
@@ -59,6 +63,11 @@ public class PlatformEndpointsTests(ApiFactory factory)
         Assert.True(userProperties.TryGetProperty("createdAt", out _));
         Assert.True(userProperties.TryGetProperty("updatedAt", out var updatedAt));
         Assert.False(string.IsNullOrWhiteSpace(updatedAt.GetProperty("description").GetString()));
+
+        var permissionProperties = json.RootElement.GetProperty("components").GetProperty("schemas")
+            .GetProperty("PermissionResponse").GetProperty("properties");
+        Assert.True(permissionProperties.TryGetProperty("name", out _));
+        Assert.True(permissionProperties.TryGetProperty("updatedAt", out _));
     }
 
     [Fact]

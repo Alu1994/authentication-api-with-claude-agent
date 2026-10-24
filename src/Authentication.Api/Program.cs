@@ -45,6 +45,7 @@ app.MapScalarApiReference(options => options.WithTitle("Authentication API")).Al
 app.MapDefaultEndpoints();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
+app.MapPermissionEndpoints();
 
 await app.RunAsync();
 

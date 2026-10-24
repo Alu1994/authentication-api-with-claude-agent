@@ -2,6 +2,11 @@ using Authentication.Application.Abstractions.Messaging;
 using Authentication.Application.Abstractions.Paging;
 using Authentication.Application.Abstractions.Results;
 using Authentication.Application.Auth.Login;
+using Authentication.Application.Permissions;
+using Authentication.Application.Permissions.Create;
+using Authentication.Application.Permissions.Delete;
+using Authentication.Application.Permissions.GetById;
+using Authentication.Application.Permissions.List;
 using Authentication.Application.Users;
 using Authentication.Application.Users.ChangePassword;
 using Authentication.Application.Users.Create;
@@ -28,6 +33,14 @@ public static class DependencyInjection
 
         services.AddScoped<IQueryHandler<GetUserByIdQuery, Result<UserResponse>>, GetUserByIdQueryHandler>();
         services.AddScoped<IQueryHandler<ListUsersQuery, Result<PagedResponse<UserResponse>>>, ListUsersQueryHandler>();
+
+        services.AddScoped<ICommandHandler<CreatePermissionCommand, Result<PermissionResponse>>,
+            CreatePermissionCommandHandler>();
+        services.AddScoped<ICommandHandler<DeletePermissionCommand, Result>, DeletePermissionCommandHandler>();
+        services.AddScoped<IQueryHandler<GetPermissionByIdQuery, Result<PermissionResponse>>,
+            GetPermissionByIdQueryHandler>();
+        services.AddScoped<IQueryHandler<ListPermissionsQuery, Result<PagedResponse<PermissionResponse>>>,
+            ListPermissionsQueryHandler>();
 
         return services;
     }

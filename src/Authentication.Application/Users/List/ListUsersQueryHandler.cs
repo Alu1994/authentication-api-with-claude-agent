@@ -11,10 +11,7 @@ public sealed class ListUsersQueryHandler(IUserRepository repository)
         ListUsersQuery query,
         CancellationToken cancellationToken)
     {
-        var errors = new ValidationErrorCollector()
-            .AddIf(query.Page < 1, "page", "A pagina deve ser maior ou igual a 1.")
-            .AddIf(query.PageSize is < 1 or > ListUsersQuery.MaxPageSize, "pageSize",
-                $"O tamanho da pagina deve estar entre 1 e {ListUsersQuery.MaxPageSize}.");
+        var errors = new ValidationErrorCollector().ValidatePaging(query.Page, query.PageSize);
 
         if (errors.HasErrors)
         {

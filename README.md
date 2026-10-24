@@ -1,10 +1,10 @@
 # Authentication
 
-Servico de identidade reutilizavel: cadastro de usuarios (CRUD com soft delete) e emissao de JWT.
-Pensado para ser consumido por varios sistemas, sem regras especificas de um frontend.
+Servico de identidade reutilizavel: cadastro de usuarios (CRUD com soft delete), catalogo de permissoes
+e emissao de JWT. Pensado para ser consumido por varios sistemas, sem regras especificas de um frontend.
 
-> Roles/Permissoes e auditoria ficam para as proximas historias. O modelo de `User` ja permite
-> relacionamentos futuros por `users.id` sem alterar a estrutura atual.
+> Roles, vinculo usuario/role/permissao, claims de autorizacao no JWT e auditoria estao em construcao
+> nas proximas historias.
 
 ## Stack
 
@@ -24,8 +24,9 @@ Tres camadas, com CQRS sem dispatcher (cada Command/Query tem seu handler injeta
 ```
 src/
   Authentication.Api              Presentation: endpoints, contratos HTTP, JWT bearer, OpenAPI, health checks
-  Authentication.Application      Entidade User, Commands/Queries + Handlers, regras de validacao, portas (interfaces)
-  Authentication.Infrastructure   EF Core/PostgreSQL, repositorio, migrations, hasher de senha, emissao de JWT
+  Authentication.Application      Entidades (User, Permission), Commands/Queries + Handlers, regras de validacao, portas
+  Authentication.Infrastructure   EF Core/PostgreSQL, repositorios, migrations, hasher de senha, emissao de JWT
+aspire/
   Authentication.ServiceDefaults  OpenTelemetry, health checks base, service discovery, resiliencia HTTP
   Authentication.AppHost          Aspire: PostgreSQL (container) + API
 tests/
@@ -44,8 +45,8 @@ em todos os ambientes: UI interativa em `/scalar/v1` e documento OpenAPI em `/op
 Exemplos de requisicao prontos em [`src/Authentication.Api/Authentication.Api.http`](src/Authentication.Api/Authentication.Api.http).
 Os health checks (`/heartbeat` e `/healthcheck`) estao descritos em [Docker](#docker).
 
-> Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer outro usuario.
-> A restricao por permissao sera feita na historia de Roles/Permissoes.
+> Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer usuario e gerenciar
+> permissoes. A restricao por permissao sera feita em uma historia propria de enforcement.
 
 ## Proposta e principais decisoes
 
@@ -64,6 +65,10 @@ Algumas decisoes de produto orientam o comportamento:
 - **Login resistente a abuso:** a resposta de falha nao revela se o e-mail existe (nem pelo conteudo, nem
   pelo tempo de resposta), e o numero de tentativas de login por IP e limitado, de forma configuravel,
   para mitigar forca bruta e credential stuffing.
+- **Permissoes como catalogo aberto:** permissoes sao pares recurso + acao (ex.: `users:read`) cadastrados
+  pela propria API, de modo que novos recursos e acoes nao exigem alteracao de codigo. Uma permissao nao
+  muda depois de criada (so e criada ou excluida), e a exclusao tambem e logica, liberando o mesmo par para
+  ser recriado.
 
 O detalhe de campos, validacoes, contratos e limites fica no codigo, na configuracao, nas migrations e na
 [documentacao da API](#documentacao-da-api).
@@ -96,8 +101,8 @@ dotnet tool restore   # dotnet-ef e reportgenerator (tools locais)
 ### Com Aspire (recomendado)
 
 ```bash
-dotnet user-secrets set "Parameters:jwt-signing-key" "<chave-com-32-ou-mais-caracteres>" --project src/Authentication.AppHost
-dotnet run --project src/Authentication.AppHost
+dotnet user-secrets set "Parameters:jwt-signing-key" "<chave-com-32-ou-mais-caracteres>" --project aspire/Authentication.AppHost
+dotnet run --project aspire/Authentication.AppHost
 ```
 
 O AppHost sobe o PostgreSQL (container com volume persistente), injeta a connection string e a chave na API

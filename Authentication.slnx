@@ -1,10 +1,12 @@
 <Solution>
+  <Folder Name="/aspire/">
+    <Project Path="aspire/Authentication.AppHost/Authentication.AppHost.csproj" />
+    <Project Path="aspire/Authentication.ServiceDefaults/Authentication.ServiceDefaults.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Authentication.Api/Authentication.Api.csproj" />
-    <Project Path="src/Authentication.AppHost/Authentication.AppHost.csproj" />
     <Project Path="src/Authentication.Application/Authentication.Application.csproj" />
     <Project Path="src/Authentication.Infrastructure/Authentication.Infrastructure.csproj" />
-    <Project Path="src/Authentication.ServiceDefaults/Authentication.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Authentication.Api.IntegrationTests/Authentication.Api.IntegrationTests.csproj" />
