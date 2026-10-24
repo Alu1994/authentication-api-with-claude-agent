@@ -57,6 +57,7 @@ public class LoginCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("hash-atualizado", _user.PasswordHash);
+        Assert.Null(_user.UpdatedAt);
         _repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

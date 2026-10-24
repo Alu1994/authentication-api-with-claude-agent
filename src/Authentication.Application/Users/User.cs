@@ -37,6 +37,12 @@ public sealed class User
 
     public DateTimeOffset CreatedAt { get; private set; }
 
+    /// <summary>
+    /// Data/hora da ultima alteracao feita no usuario (perfil, senha ou exclusao).
+    /// Nulo enquanto o usuario nunca foi alterado apos o cadastro.
+    /// </summary>
+    public DateTimeOffset? UpdatedAt { get; private set; }
+
     public bool IsDeleted { get; private set; }
 
     public DateTimeOffset? DeletedAt { get; private set; }
@@ -61,17 +67,32 @@ public sealed class User
             CreatedAt = TruncateToMicroseconds(createdAt),
         };
 
-    public void UpdateProfile(string name, string email, string phone, DateOnly birthDate)
+    public void UpdateProfile(string name, string email, string phone, DateOnly birthDate, DateTimeOffset updatedAt)
     {
         Name = name;
         Email = email;
         Phone = phone;
         BirthDate = birthDate;
+        UpdatedAt = TruncateToMicroseconds(updatedAt);
     }
 
-    public void ChangePasswordHash(string passwordHash) => PasswordHash = passwordHash;
+    /// <summary>Troca de senha solicitada pelo usuario.</summary>
+    public void ChangePasswordHash(string passwordHash, DateTimeOffset updatedAt)
+    {
+        PasswordHash = passwordHash;
+        UpdatedAt = TruncateToMicroseconds(updatedAt);
+    }
 
-    /// <summary>Exclusao logica. Chamadas repetidas preservam a data da primeira exclusao.</summary>
+    /// <summary>
+    /// Reprocessa o hash da mesma senha (ex.: algoritmo/iteracoes atualizados no login).
+    /// E manutencao tecnica transparente, por isso nao altera <see cref="UpdatedAt"/>.
+    /// </summary>
+    public void UpgradePasswordHash(string passwordHash) => PasswordHash = passwordHash;
+
+    /// <summary>
+    /// Exclusao logica. Tambem registra a exclusao como ultima alteracao (<see cref="UpdatedAt"/>).
+    /// Chamadas repetidas preservam as datas da primeira exclusao.
+    /// </summary>
     public void Delete(DateTimeOffset deletedAt)
     {
         if (IsDeleted)
@@ -81,6 +102,7 @@ public sealed class User
 
         IsDeleted = true;
         DeletedAt = TruncateToMicroseconds(deletedAt);
+        UpdatedAt = DeletedAt;
     }
 
     // Alinha a precisao a do PostgreSQL (microssegundos), garantindo que o valor retornado

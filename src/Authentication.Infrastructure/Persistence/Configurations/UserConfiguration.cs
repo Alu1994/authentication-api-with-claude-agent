@@ -21,6 +21,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.BirthDate).IsRequired();
         builder.Property(u => u.PasswordHash).HasMaxLength(512).IsRequired();
         builder.Property(u => u.CreatedAt).IsRequired();
+        builder.Property(u => u.UpdatedAt);
         builder.Property(u => u.IsDeleted).HasDefaultValue(false).IsRequired();
         builder.Property(u => u.DeletedAt);
 

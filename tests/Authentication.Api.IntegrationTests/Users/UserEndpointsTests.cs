@@ -4,7 +4,10 @@ using System.Net.Http.Json;
 using Authentication.Api.IntegrationTests.Infrastructure;
 using Authentication.Application.Abstractions.Paging;
 using Authentication.Application.Users;
+using Authentication.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using static Authentication.Api.IntegrationTests.Infrastructure.ApiClient;
 
 namespace Authentication.Api.IntegrationTests.Users;
@@ -30,6 +33,7 @@ public class UserEndpointsTests(ApiFactory factory)
         Assert.Equal(cpf, user.Cpf);
         Assert.Equal("11987654321", user.Phone);
         Assert.Equal(new DateOnly(1990, 5, 10), user.BirthDate);
+        Assert.Null(user.UpdatedAt);
         Assert.Equal($"/users/{user.Id}", response.Headers.Location?.OriginalString);
 
         var body = await response.Content.ReadAsStringAsync(Ct);
@@ -168,6 +172,8 @@ public class UserEndpointsTests(ApiFactory factory)
         Assert.Equal("1133334444", updated.Phone);
         Assert.Equal(new DateOnly(1985, 1, 1), updated.BirthDate);
         Assert.Equal(user.Cpf, updated.Cpf);
+        Assert.NotNull(updated.UpdatedAt);
+        Assert.True(updated.UpdatedAt >= updated.CreatedAt);
     }
 
     [Fact]
@@ -218,6 +224,8 @@ public class UserEndpointsTests(ApiFactory factory)
         var oldLogin = await _client.PostAsJsonAsync("/auth/login", new { email = user.Email, password = DefaultPassword }, Ct);
         Assert.Equal(HttpStatusCode.Unauthorized, oldLogin.StatusCode);
         Assert.False(string.IsNullOrEmpty(await _client.LoginAsync(user.Email, "NovaSenha456")));
+        var changed = await _client.GetFromJsonAsync<UserResponse>($"/users/{user.Id}", Ct);
+        Assert.NotNull(changed!.UpdatedAt);
     }
 
     [Fact]
@@ -246,6 +254,15 @@ public class UserEndpointsTests(ApiFactory factory)
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/users/{user.Id}", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.DeleteAsync($"/users/{user.Id}", Ct)).StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
+            var stored = await db.Users.IgnoreQueryFilters().AsNoTracking().SingleAsync(u => u.Id == user.Id, Ct);
+            Assert.True(stored.IsDeleted);
+            Assert.NotNull(stored.DeletedAt);
+            Assert.Equal(stored.DeletedAt, stored.UpdatedAt);
+        }
 
         var login = await _client.PostAsJsonAsync("/auth/login", new { email = user.Email, password = DefaultPassword }, Ct);
         Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);

@@ -40,6 +40,7 @@ public class UpdateUserCommandHandlerTests
         Assert.Equal("1133334444", _user.Phone);
         Assert.Equal(new DateOnly(1985, 1, 1), _user.BirthDate);
         Assert.Equal(TestData.ValidCpf, _user.Cpf);
+        Assert.Equal(TestData.Now, _user.UpdatedAt);
         _repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

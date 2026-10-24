@@ -48,7 +48,7 @@ public sealed partial class LoginCommandHandler(
 
         if (verification == PasswordVerification.SuccessRehashNeeded)
         {
-            user.ChangePasswordHash(passwordHasher.Hash(command.Password!));
+            user.UpgradePasswordHash(passwordHasher.Hash(command.Password!));
             await repository.SaveChangesAsync(cancellationToken);
         }
 

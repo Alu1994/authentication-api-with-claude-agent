@@ -77,6 +77,10 @@ namespace Authentication.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(11)")
                         .HasColumnName("phone");
 
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 

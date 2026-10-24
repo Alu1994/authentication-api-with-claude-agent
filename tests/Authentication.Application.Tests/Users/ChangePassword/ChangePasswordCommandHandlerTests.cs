@@ -21,6 +21,7 @@ public class ChangePasswordCommandHandlerTests
         _handler = new ChangePasswordCommandHandler(
             _repository.Object,
             _hasher.Object,
+            TestData.CreateTimeProvider(),
             NullLogger<ChangePasswordCommandHandler>.Instance);
     }
 
@@ -38,6 +39,7 @@ public class ChangePasswordCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("novo-hash", _user.PasswordHash);
+        Assert.Equal(TestData.Now, _user.UpdatedAt);
         _repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -70,6 +72,7 @@ public class ChangePasswordCommandHandlerTests
         Assert.Equal(ErrorType.Validation, result.Error!.Type);
         Assert.Contains("currentPassword", result.Error.ValidationErrors.Keys);
         Assert.Equal(TestData.PasswordHash, _user.PasswordHash);
+        Assert.Null(_user.UpdatedAt);
     }
 
     [Fact]

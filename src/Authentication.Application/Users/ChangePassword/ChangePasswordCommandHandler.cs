@@ -9,6 +9,7 @@ namespace Authentication.Application.Users.ChangePassword;
 public sealed partial class ChangePasswordCommandHandler(
     IUserRepository repository,
     IPasswordHasher passwordHasher,
+    TimeProvider timeProvider,
     ILogger<ChangePasswordCommandHandler> logger)
     : ICommandHandler<ChangePasswordCommand, Result>
 {
@@ -41,7 +42,7 @@ public sealed partial class ChangePasswordCommandHandler(
                 .ToError();
         }
 
-        user.ChangePasswordHash(passwordHasher.Hash(command.NewPassword!));
+        user.ChangePasswordHash(passwordHasher.Hash(command.NewPassword!), timeProvider.GetUtcNow());
         await repository.SaveChangesAsync(cancellationToken);
 
         LogPasswordChanged(logger, user.Id);

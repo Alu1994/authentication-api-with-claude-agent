@@ -30,6 +30,7 @@ public class DeleteUserCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.True(user.IsDeleted);
         Assert.Equal(TestData.Now, user.DeletedAt);
+        Assert.Equal(TestData.Now, user.UpdatedAt);
         _repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

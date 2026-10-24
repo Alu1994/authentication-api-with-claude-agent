@@ -24,7 +24,8 @@ public class GetUserByIdQueryHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(
-            new UserResponse(user.Id, user.Name, user.Email, user.Cpf, user.Phone, user.BirthDate, user.CreatedAt),
+            new UserResponse(user.Id, user.Name, user.Email, user.Cpf, user.Phone, user.BirthDate, user.CreatedAt,
+                user.UpdatedAt),
             result.Value);
     }
 

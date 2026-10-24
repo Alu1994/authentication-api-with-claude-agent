@@ -17,7 +17,8 @@ public sealed partial class UpdateUserCommandHandler(
         var name = UserRules.NormalizeName(command.Name);
         var email = UserRules.NormalizeEmail(command.Email);
         var phone = UserRules.NormalizePhone(command.Phone);
-        var today = DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
+        var now = timeProvider.GetUtcNow();
+        var today = DateOnly.FromDateTime(now.UtcDateTime);
 
         var errors = new ValidationErrorCollector()
             .ValidateProfile(name, email, phone, command.BirthDate, today);
@@ -38,7 +39,7 @@ public sealed partial class UpdateUserCommandHandler(
             return UserErrors.EmailAlreadyInUse;
         }
 
-        user.UpdateProfile(name, email, phone, command.BirthDate!.Value);
+        user.UpdateProfile(name, email, phone, command.BirthDate!.Value, now);
 
         try
         {

@@ -53,6 +53,12 @@ public class PlatformEndpointsTests(ApiFactory factory)
         var login = paths.GetProperty("/auth/login").GetProperty("post");
         Assert.False(login.TryGetProperty("security", out _));
         Assert.True(login.GetProperty("responses").TryGetProperty("429", out _));
+
+        var userProperties = json.RootElement.GetProperty("components").GetProperty("schemas")
+            .GetProperty("UserResponse").GetProperty("properties");
+        Assert.True(userProperties.TryGetProperty("createdAt", out _));
+        Assert.True(userProperties.TryGetProperty("updatedAt", out var updatedAt));
+        Assert.False(string.IsNullOrWhiteSpace(updatedAt.GetProperty("description").GetString()));
     }
 
     [Fact]

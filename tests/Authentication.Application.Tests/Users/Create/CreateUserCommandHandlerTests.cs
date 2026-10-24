@@ -63,6 +63,7 @@ public class CreateUserCommandHandlerTests
         Assert.Equal(added.Id, response.Id);
         Assert.Equal(TestData.ValidEmail, response.Email);
         Assert.Equal(TestData.Now, response.CreatedAt);
+        Assert.Null(response.UpdatedAt);
         _repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
