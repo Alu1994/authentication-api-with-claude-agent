@@ -1,8 +1,6 @@
 using Authentication.Application.Abstractions.Paging;
-using Authentication.Application.Abstractions.Persistence;
 using Authentication.Application.Users;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace Authentication.Infrastructure.Persistence;
 
@@ -53,20 +51,8 @@ internal sealed class UserRepository(AuthenticationDbContext context) : IUserRep
 
     public void Add(User user) => context.Users.Add(user);
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            await context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException
-                                           {
-                                               SqlState: PostgresErrorCodes.UniqueViolation,
-                                           } postgresException)
-        {
-            throw new UniqueConstraintViolationException(postgresException.ConstraintName, ex);
-        }
-    }
+    public Task SaveChangesAsync(CancellationToken cancellationToken) =>
+        context.SaveChangesTranslatingUniqueViolationAsync(cancellationToken);
 
     private const string LikeEscapeCharacter = @"\";
 

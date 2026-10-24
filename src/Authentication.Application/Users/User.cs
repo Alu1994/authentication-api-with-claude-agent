@@ -1,3 +1,5 @@
+using static Authentication.Application.Abstractions.Time.Timestamps;
+
 namespace Authentication.Application.Users;
 
 /// <summary>
@@ -104,9 +106,4 @@ public sealed class User
         DeletedAt = TruncateToMicroseconds(deletedAt);
         UpdatedAt = DeletedAt;
     }
-
-    // Alinha a precisao a do PostgreSQL (microssegundos), garantindo que o valor retornado
-    // logo apos a escrita seja identico ao lido do banco posteriormente.
-    private static DateTimeOffset TruncateToMicroseconds(DateTimeOffset value) =>
-        value.AddTicks(-(value.Ticks % TimeSpan.TicksPerMicrosecond));
 }
