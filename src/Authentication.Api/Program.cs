@@ -46,6 +46,7 @@ app.MapDefaultEndpoints();
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
 app.MapPermissionEndpoints();
+app.MapRoleEndpoints();
 
 await app.RunAsync();
 

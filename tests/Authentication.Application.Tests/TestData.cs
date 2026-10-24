@@ -1,4 +1,5 @@
 using Authentication.Application.Permissions;
+using Authentication.Application.Roles;
 using Authentication.Application.Users;
 using Microsoft.Extensions.Time.Testing;
 
@@ -23,4 +24,6 @@ internal static class TestData
 
     public static Permission CreatePermission(string resource = "users", string action = "read") =>
         Permission.Create(resource, action, "Descricao", Now);
+
+    public static Role CreateRole(string name = "Admin") => Role.Create(name, "Descricao", Now);
 }

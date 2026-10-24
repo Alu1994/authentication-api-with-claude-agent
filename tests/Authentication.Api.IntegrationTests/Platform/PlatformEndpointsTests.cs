@@ -46,6 +46,17 @@ public class PlatformEndpointsTests(ApiFactory factory)
         Assert.True(paths.TryGetProperty("/permissions/{id}", out var permissionById));
         Assert.False(permissionById.TryGetProperty("put", out _)); // permissao e imutavel
         Assert.True(permissionById.GetProperty("get").TryGetProperty("security", out _));
+        Assert.True(permissionById.GetProperty("delete").GetProperty("responses").TryGetProperty("409", out _));
+        Assert.True(paths.TryGetProperty("/roles", out _));
+        Assert.True(paths.TryGetProperty("/roles/{id}", out var roleById));
+        Assert.True(roleById.TryGetProperty("put", out _));
+        Assert.True(roleById.GetProperty("delete").TryGetProperty("security", out _));
+        Assert.True(paths.TryGetProperty("/roles/{id}/permissions", out var rolePermissions));
+        Assert.True(rolePermissions.TryGetProperty("get", out _));
+        Assert.True(rolePermissions.TryGetProperty("put", out _));
+        Assert.True(paths.TryGetProperty("/roles/{id}/permissions/{permissionId}", out var rolePermission));
+        Assert.True(rolePermission.TryGetProperty("post", out _));
+        Assert.True(rolePermission.TryGetProperty("delete", out _));
         Assert.False(paths.TryGetProperty("/heartbeat", out _));
 
         var schemes = json.RootElement.GetProperty("components").GetProperty("securitySchemes");
