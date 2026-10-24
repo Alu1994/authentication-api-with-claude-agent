@@ -1,0 +1,201 @@
+# Authentication
+
+Servico de identidade reutilizavel: cadastro de usuarios (CRUD com soft delete) e emissao de JWT.
+Pensado para ser consumido por varios sistemas, sem regras especificas de um frontend.
+
+> Roles/Permissoes e auditoria ficam para as proximas historias. O modelo de `User` ja permite
+> relacionamentos futuros por `users.id` sem alterar a estrutura atual.
+
+## Stack
+
+- .NET 10 (LTS) + ASP.NET Core Minimal APIs
+- PostgreSQL + EF Core 10 (migrations, nomes em `snake_case`)
+- JWT HS256 (`Microsoft.AspNetCore.Authentication.JwtBearer`)
+- Hash de senha: `PasswordHasher` do ASP.NET Core Identity (PBKDF2/HMAC-SHA512, 100k iteracoes)
+- OpenAPI nativo (`Microsoft.AspNetCore.OpenApi`) + UI Scalar
+- OpenTelemetry (traces, metricas e logs) com exportacao OTLP
+- .NET Aspire para orquestracao local
+- Testes: xUnit v3 (Microsoft Testing Platform) + Moq + Testcontainers (PostgreSQL)
+
+## Arquitetura
+
+Tres camadas, com CQRS sem dispatcher (cada Command/Query tem seu handler injetado direto no endpoint):
+
+```
+src/
+  Authentication.Api              Presentation: endpoints, contratos HTTP, JWT bearer, OpenAPI, health checks
+  Authentication.Application      Entidade User, Commands/Queries + Handlers, regras de validacao, portas (interfaces)
+  Authentication.Infrastructure   EF Core/PostgreSQL, repositorio, migrations, hasher de senha, emissao de JWT
+  Authentication.ServiceDefaults  OpenTelemetry, health checks base, service discovery, resiliencia HTTP
+  Authentication.AppHost          Aspire: PostgreSQL (container) + API
+tests/
+  Authentication.Application.Tests     Unitarios: regras, entidade e handlers
+  Authentication.Infrastructure.Tests  Unitarios: JWT, opcoes de JWT e hasher
+  Authentication.Api.IntegrationTests  Ponta a ponta (API real + PostgreSQL em container)
+```
+
+Erros de negocio trafegam como `Result`/`Error` (sem excecoes para fluxo esperado) e viram
+`ProblemDetails` (RFC 9457) na API, com o campo `code` (ex.: `user.email_in_use`).
+
+## Endpoints
+
+| Metodo | Rota | Auth | Descricao | Respostas |
+|---|---|---|---|---|
+| POST | `/auth/login` | publico | Valida e-mail/senha e retorna JWT (com rate limiting) | 200, 400, 401, 429 |
+| POST | `/users` | publico | Auto-registro | 201, 400, 409 |
+| GET | `/users?page=&pageSize=&search=` | Bearer | Lista paginada (padrao 20, max 100), busca por nome/e-mail | 200, 400, 401 |
+| GET | `/users/{id}` | Bearer | Consulta por Id | 200, 401, 404 |
+| PUT | `/users/{id}` | Bearer | Atualiza nome, e-mail, telefone e nascimento (CPF imutavel) | 204, 400, 401, 404, 409 |
+| PUT | `/users/{id}/password` | Bearer | Troca de senha (exige a atual) | 204, 400, 401, 404 |
+| DELETE | `/users/{id}` | Bearer | Soft delete | 204, 401, 404 |
+| GET | `/heartbeat` | publico | Liveness (app de pe) | 200 |
+| GET | `/healthcheck` | publico | Dependencias (PostgreSQL) com detalhe em JSON | 200, 503 |
+| GET | `/openapi/v1.json` / `/scalar/v1` | publico | Documento OpenAPI / UI (todos os ambientes) | 200 |
+
+Exemplos prontos em [`src/Authentication.Api/Authentication.Api.http`](src/Authentication.Api/Authentication.Api.http).
+
+> Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer outro usuario.
+> A restricao por permissao sera feita na historia de Roles/Permissoes.
+
+## Regras de negocio
+
+| Campo | Regra |
+|---|---|
+| `name` | Obrigatorio, 3 a 150 caracteres (trim) |
+| `email` | Formato valido, ate 254 caracteres, normalizado em minusculas, **unico** |
+| `cpf` | Com ou sem mascara; armazenado so com digitos; digitos verificadores validos; rejeita sequencias repetidas; **unico** e imutavel |
+| `phone` | Com ou sem mascara; DDD + numero (10 ou 11 digitos), sem zero inicial |
+| `birthDate` | `yyyy-MM-dd`, anterior a hoje e com no maximo 120 anos |
+| `password` | 8 a 128 caracteres, com ao menos uma letra e um digito. Na troca, a nova deve ser diferente da atual |
+
+- **Soft delete:** usuario excluido some das consultas (filtro global do EF), nao autentica e recebe 404.
+- **Unicidade global:** e-mail e CPF nao podem ser reaproveitados, nem de usuarios excluidos
+  (checagem previa + indice unico no banco para corridas, ambos retornando 409).
+- **Login:** e-mail inexistente, usuario excluido e senha errada retornam o mesmo 401, para evitar enumeracao.
+  Quando o usuario nao existe, e feita uma verificacao contra um hash descartavel (mesmo algoritmo e
+  iteracoes), de modo que o tempo de resposta seja equivalente ao de senha incorreta e nao revele
+  quais e-mails estao cadastrados. Hashes em formato antigo sao reprocessados de forma transparente no login.
+- **Rate limiting do login:** ver [secao propria](#rate-limiting-do-login).
+- **JWT:** claims `sub` (Id), `email`, `name`, `jti`. Expiracao em `Jwt:ExpirationMinutes` (padrao 60).
+
+## Rate limiting do login
+
+`POST /auth/login` usa o rate limiting nativo do ASP.NET Core (`Microsoft.AspNetCore.RateLimiting`),
+aplicado **somente** a esse endpoint:
+
+- **Algoritmo:** janela fixa (*fixed window*) particionada por IP do cliente. Padrao de **5 tentativas a cada
+  60 segundos** por IP, contando sucessos e falhas, sem fila.
+- **Resposta ao exceder:** `429 Too Many Requests` em `ProblemDetails` (`code: auth.rate_limited`) e header
+  `Retry-After` com os segundos ate a proxima janela.
+- **Por que janela fixa:** e simples e previsivel para o cliente (o `Retry-After` e exato), e o limite e
+  baixo o bastante para tornar inviavel forca bruta ou credential stuffing a partir de um IP. Se o pico na
+  virada da janela (ate 2x o limite em sequencia) virar problema, a troca para *sliding window* e local
+  em `Security/LoginRateLimiting.cs`.
+- **Escopo:** o contador e por instancia (em memoria). Com N replicas, o limite efetivo por IP e de ate N x o
+  configurado. Um limite global exigiria um store distribuido (ex.: Redis) ou o rate limit do API Gateway/WAF.
+- **IP real atras de proxy:** em EKS/ECS (ALB/ingress) o `RemoteIpAddress` e o do balanceador. Defina
+  `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true` para que o ASP.NET Core use o `X-Forwarded-For`. Sem isso,
+  todos os clientes compartilham o mesmo limite. Essa opcao confia no header enviado pelo proxy: garanta
+  que a API so seja acessivel atraves dele.
+
+## Configuracao
+
+| Chave | Descricao |
+|---|---|
+| `ConnectionStrings__authdb` | Connection string do PostgreSQL (injetada automaticamente pelo Aspire) |
+| `Jwt__Issuer` / `Jwt__Audience` | Padrao em `appsettings.json` (`authentication-api` / `authentication-clients`) |
+| `Jwt__SigningKey` | **Segredo**, minimo de 32 caracteres. Nunca versionar: user-secrets em dev, Secrets Manager/variavel de ambiente em EKS/ECS |
+| `Jwt__ExpirationMinutes` | Validade do token (padrao 60) |
+| `RateLimiting__Login__PermitLimit` | Tentativas de login por IP por janela (padrao 5) |
+| `RateLimiting__Login__WindowSeconds` | Duracao da janela, em segundos (padrao 60) |
+| `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | `true` atras de ALB/ingress, para o rate limit usar o IP real do cliente |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Endpoint OTLP do collector/sidecar. Se ausente, nada e exportado |
+| `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES` | Variaveis padrao do OpenTelemetry para identificar o servico |
+
+As opcoes de JWT e de rate limiting sao validadas no startup: a aplicacao nao sobe com chave JWT ausente/curta
+ou com limites menores ou iguais a zero.
+
+## Execucao local
+
+Pre-requisitos: .NET SDK 10.0.401+ (fixado em `global.json`) e Docker em execucao.
+
+```bash
+dotnet tool restore   # dotnet-ef e reportgenerator (tools locais)
+```
+
+### Com Aspire (recomendado)
+
+```bash
+dotnet user-secrets set "Parameters:jwt-signing-key" "<chave-com-32-ou-mais-caracteres>" --project src/Authentication.AppHost
+dotnet run --project src/Authentication.AppHost
+```
+
+O AppHost sobe o PostgreSQL (container com volume persistente), injeta a connection string e a chave na API
+e abre o dashboard do Aspire com logs, traces e metricas (o Aspire define `OTEL_EXPORTER_OTLP_ENDPOINT`).
+Se o segredo nao estiver configurado, o dashboard pede o valor.
+
+### Somente a API
+
+```bash
+dotnet user-secrets set "Jwt:SigningKey" "<chave-com-32-ou-mais-caracteres>" --project src/Authentication.Api
+dotnet user-secrets set "ConnectionStrings:authdb" "Host=localhost;Port=5432;Database=authdb;Username=postgres;Password=<senha>" --project src/Authentication.Api
+dotnet run --project src/Authentication.Api   # http://localhost:5080/scalar/v1
+```
+
+Em `Development` (inclusive via Aspire) as migrations sao aplicadas automaticamente no startup.
+
+## Migrations
+
+```bash
+# nova migration
+dotnet ef migrations add <Nome> --project src/Authentication.Infrastructure --startup-project src/Authentication.Infrastructure --output-dir Persistence/Migrations
+```
+
+### Deploy (EKS/ECS)
+
+Fora de `Development` a API **nao** aplica migrations. Gere um bundle autocontido no pipeline e rode-o
+como Kubernetes Job (ou init container/hook do Helm) no EKS, ou como tarefa ECS avulsa,
+**antes** de publicar a nova versao da API:
+
+```bash
+dotnet ef migrations bundle --project src/Authentication.Infrastructure --startup-project src/Authentication.Infrastructure \
+  --self-contained --target-runtime linux-x64 --output efbundle
+
+./efbundle --connection "$ConnectionStrings__authdb"
+```
+
+O bundle e idempotente: aplica apenas as migrations pendentes.
+
+## Docker
+
+```bash
+docker build -f src/Authentication.Api/Dockerfile -t authentication-api .
+docker run -p 8080:8080 \
+  -e ConnectionStrings__authdb="..." \
+  -e Jwt__SigningKey="..." \
+  -e ASPNETCORE_FORWARDEDHEADERS_ENABLED=true \
+  -e OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317" \
+  authentication-api
+```
+
+A imagem roda como usuario nao-root na porta 8080. Probes sugeridos:
+`livenessProbe` -> `/heartbeat`, `readinessProbe` -> `/healthcheck`.
+
+## Testes e cobertura
+
+```bash
+dotnet test
+```
+
+Os testes de integracao usam Testcontainers e precisam do Docker em execucao.
+Cobertura consolidada (unitarios + integracao, meta de 90%):
+
+```bash
+dotnet test --coverlet --coverlet-output-format cobertura \
+  --coverlet-exclude-by-attribute ExcludeFromCodeCoverage --coverlet-exclude-by-attribute GeneratedCode \
+  --coverlet-exclude-by-file "**/Migrations/*.cs"
+dotnet reportgenerator -reports:"TestResults/coverage.cobertura.*.xml" -targetdir:TestResults/report \
+  -reporttypes:"TextSummary;Html" -assemblyfilters:"+Authentication.*;-*.Tests;-*.IntegrationTests"
+```
+
+DTOs, `Program` e classes de bootstrap estao marcados com `[ExcludeFromCodeCoverage]`.
