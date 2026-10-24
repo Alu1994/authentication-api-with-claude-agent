@@ -137,6 +137,37 @@ Content-Type: application/json
   "permissionIds": ["{{permissionId}}"]
 }
 
+### Atribuir role ao usuario (idempotente; vale nas claims a partir do proximo login)
+POST {{baseUrl}}/users/{{userId}}/roles/{{roleId}}
+Authorization: Bearer {{token}}
+
+### Listar roles do usuario
+GET {{baseUrl}}/users/{{userId}}/roles
+Authorization: Bearer {{token}}
+
+### Substituir todas as roles do usuario (tudo ou nada; [] remove todas)
+PUT {{baseUrl}}/users/{{userId}}/roles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "roleIds": ["{{roleId}}"]
+}
+
+### Novo login - o token passa a trazer as claims "role" e "permission"
+# Usa a senha definida em "Trocar senha" acima.
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "NovaSenha456"
+}
+
+### Remover role do usuario (necessario antes de excluir a role: 409 enquanto atribuida)
+DELETE {{baseUrl}}/users/{{userId}}/roles/{{roleId}}
+Authorization: Bearer {{token}}
+
 ### Desvincular permissao da role
 DELETE {{baseUrl}}/roles/{{roleId}}/permissions/{{permissionId}}
 Authorization: Bearer {{token}}

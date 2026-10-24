@@ -52,7 +52,9 @@ public sealed partial class LoginCommandHandler(
             await repository.SaveChangesAsync(cancellationToken);
         }
 
-        var token = tokenService.CreateToken(user);
+        // Roles/permissoes refletem o estado no momento do login; mudancas valem a partir do proximo login.
+        var authorization = await repository.GetAuthorizationAsync(user.Id, cancellationToken);
+        var token = tokenService.CreateToken(user, authorization);
         LogLoginSucceeded(logger, user.Id);
 
         return new LoginResponse(token.Value, TokenType, token.ExpiresAt);

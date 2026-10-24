@@ -78,10 +78,12 @@ internal static class RoleEndpoints
             .WithSummary("Exclui uma role (soft delete)")
             .WithDescription(
                 "Exclusao logica: a role deixa de aparecer nas consultas e o nome pode ser reutilizado. Os vinculos " +
-                "com permissoes sao mantidos, sem efeito. " + RoleNotFoundDescription)
+                "com permissoes sao mantidos, sem efeito. Retorna 409 enquanto a role estiver atribuida a algum " +
+                "usuario ativo (remova-a dos usuarios antes). " + RoleNotFoundDescription)
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapGet("/{id:guid}/permissions", ListPermissionsAsync)
             .WithName("ListRolePermissions")

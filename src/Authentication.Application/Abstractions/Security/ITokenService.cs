@@ -8,5 +8,6 @@ public sealed record AccessToken(string Value, DateTimeOffset ExpiresAt);
 /// <summary>Emite tokens de acesso (JWT) para usuarios autenticados.</summary>
 public interface ITokenService
 {
-    AccessToken CreateToken(User user);
+    /// <summary>Emite o token com claims de identidade e de autorizacao (roles e permissoes).</summary>
+    AccessToken CreateToken(User user, UserAuthorization authorization);
 }

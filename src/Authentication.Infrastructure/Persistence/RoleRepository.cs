@@ -42,6 +42,24 @@ internal sealed class RoleRepository(AuthenticationDbContext context) : IRoleRep
 
     public void Add(Role role) => context.Roles.Add(role);
 
+    // context.Users aplica o filtro de soft delete: atribuicoes a usuarios excluidos nao contam.
+    public Task<bool> IsAssignedToActiveUserAsync(Guid roleId, CancellationToken cancellationToken) =>
+        context.UserRoles.AnyAsync(
+            ur => ur.RoleId == roleId && context.Users.Any(u => u.Id == ur.UserId),
+            cancellationToken);
+
+    public async Task<IReadOnlySet<Guid>> GetActiveIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken)
+    {
+        var active = await context.Roles
+            .Where(r => ids.Contains(r.Id))
+            .Select(r => r.Id)
+            .ToListAsync(cancellationToken);
+
+        return active.ToHashSet();
+    }
+
     public Task<RolePermission?> GetPermissionLinkAsync(
         Guid roleId,
         Guid permissionId,

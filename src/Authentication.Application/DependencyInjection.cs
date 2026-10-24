@@ -24,6 +24,10 @@ using Authentication.Application.Users.Delete;
 using Authentication.Application.Users.GetById;
 using Authentication.Application.Users.List;
 using Authentication.Application.Users.Update;
+using Authentication.Application.Users.UserRoles.Add;
+using Authentication.Application.Users.UserRoles.List;
+using Authentication.Application.Users.UserRoles.Remove;
+using Authentication.Application.Users.UserRoles.Replace;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -64,6 +68,12 @@ public static class DependencyInjection
             ReplaceRolePermissionsCommandHandler>();
         services.AddScoped<IQueryHandler<ListRolePermissionsQuery, Result<IReadOnlyList<PermissionResponse>>>,
             ListRolePermissionsQueryHandler>();
+
+        services.AddScoped<ICommandHandler<AddUserRoleCommand, Result>, AddUserRoleCommandHandler>();
+        services.AddScoped<ICommandHandler<RemoveUserRoleCommand, Result>, RemoveUserRoleCommandHandler>();
+        services.AddScoped<ICommandHandler<ReplaceUserRolesCommand, Result>, ReplaceUserRolesCommandHandler>();
+        services.AddScoped<IQueryHandler<ListUserRolesQuery, Result<IReadOnlyList<RoleResponse>>>,
+            ListUserRolesQueryHandler>();
 
         return services;
     }
