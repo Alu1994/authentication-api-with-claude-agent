@@ -32,10 +32,10 @@ internal sealed class UserRepository(AuthenticationDbContext context) : IUserRep
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{EscapeLikePattern(search)}%";
+            var pattern = LikePatterns.Contains(search);
             query = query.Where(u =>
-                EF.Functions.ILike(u.Name, pattern, LikeEscapeCharacter)
-                || EF.Functions.ILike(u.Email, pattern, LikeEscapeCharacter));
+                EF.Functions.ILike(u.Name, pattern, LikePatterns.EscapeCharacter)
+                || EF.Functions.ILike(u.Email, pattern, LikePatterns.EscapeCharacter));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -53,12 +53,4 @@ internal sealed class UserRepository(AuthenticationDbContext context) : IUserRep
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         context.SaveChangesTranslatingUniqueViolationAsync(cancellationToken);
-
-    private const string LikeEscapeCharacter = @"\";
-
-    // Trata %, _ e \ digitados na busca como literais.
-    private static string EscapeLikePattern(string value) =>
-        value.Replace(LikeEscapeCharacter, LikeEscapeCharacter + LikeEscapeCharacter, StringComparison.Ordinal)
-            .Replace("%", LikeEscapeCharacter + "%", StringComparison.Ordinal)
-            .Replace("_", LikeEscapeCharacter + "_", StringComparison.Ordinal);
 }
