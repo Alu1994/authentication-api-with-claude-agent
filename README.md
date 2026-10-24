@@ -47,26 +47,25 @@ Os health checks (`/heartbeat` e `/healthcheck`) estao descritos em [Docker](#do
 > Nesta versao qualquer usuario autenticado pode consultar/alterar/excluir qualquer outro usuario.
 > A restricao por permissao sera feita na historia de Roles/Permissoes.
 
-## Regras de negocio
+## Proposta e principais decisoes
 
-| Campo | Regra |
-|---|---|
-| `name` | Obrigatorio, 3 a 150 caracteres (trim) |
-| `email` | Formato valido, ate 254 caracteres, normalizado em minusculas, **unico** |
-| `cpf` | Com ou sem mascara; armazenado so com digitos; digitos verificadores validos; rejeita sequencias repetidas; **unico** e imutavel |
-| `phone` | Com ou sem mascara; DDD + numero (10 ou 11 digitos), sem zero inicial |
-| `birthDate` | `yyyy-MM-dd`, anterior a hoje e com no maximo 120 anos |
-| `password` | 8 a 128 caracteres, com ao menos uma letra e um digito. Na troca, a nova deve ser diferente da atual |
+A API centraliza a identidade dos usuarios para que outros sistemas nao precisem reimplementar
+cadastro e login: ela mantem o cadastro de usuarios e autentica por e-mail e senha, devolvendo um JWT
+que os sistemas consumidores validam por conta propria.
 
-- **Soft delete:** usuario excluido some das consultas (filtro global do EF), nao autentica e recebe 404.
-- **Unicidade global:** e-mail e CPF nao podem ser reaproveitados, nem de usuarios excluidos
-  (checagem previa + indice unico no banco para corridas, ambos retornando 409).
-- **Login:** e-mail inexistente, usuario excluido e senha errada retornam o mesmo 401, para evitar enumeracao.
-  Quando o usuario nao existe, e feita uma verificacao contra um hash descartavel (mesmo algoritmo e
-  iteracoes), de modo que o tempo de resposta seja equivalente ao de senha incorreta e nao revele
-  quais e-mails estao cadastrados. Hashes em formato antigo sao reprocessados de forma transparente no login.
-- **Rate limiting do login:** ver [secao propria](#rate-limiting-do-login).
-- **JWT:** claims `sub` (Id), `email`, `name`, `jti`. Expiracao em `Jwt:ExpirationMinutes` (padrao 60).
+Algumas decisoes de produto orientam o comportamento:
+
+- **Identidade estavel:** e-mail e CPF identificam uma pessoa de forma unica e nunca sao reaproveitados,
+  nem depois que o usuario e excluido. O CPF nao muda depois do cadastro.
+- **Exclusao preserva historico:** usuarios excluidos deixam de aparecer e de autenticar, mas o registro
+  e mantido (soft delete), garantindo a regra acima e permitindo auditoria futura.
+- **Senha sob responsabilidade da API:** a senha e armazenada apenas como hash forte, e a troca exige a
+  senha atual.
+- **Login resistente a abuso:** a resposta de falha nao revela se o e-mail existe (nem pelo conteudo, nem
+  pelo tempo de resposta), e as tentativas sao limitadas por IP (ver [Rate limiting do login](#rate-limiting-do-login)).
+
+O detalhe de campos, validacoes e contratos fica no codigo, nas migrations e na
+[documentacao da API](#documentacao-da-api).
 
 ## Rate limiting do login
 
