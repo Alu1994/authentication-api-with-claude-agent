@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Authentication.Api\Authentication.Api.csproj" />
+    <ProjectReference Include="..\..\src\Authentication.Api\Authentication.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

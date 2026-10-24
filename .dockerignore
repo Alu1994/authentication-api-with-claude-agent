@@ -10,7 +10,7 @@ efbundle*
 
 # Testes e orquestracao local (nao vao para a imagem da API)
 tests/
-src/Authentication.AppHost/
+aspire/Authentication.AppHost/
 
 # IDEs e editores
 .vs/

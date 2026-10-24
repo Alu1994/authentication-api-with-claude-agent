@@ -9,10 +9,11 @@ COPY global.json Directory.Build.props Directory.Packages.props ./
 COPY src/Authentication.Api/Authentication.Api.csproj src/Authentication.Api/
 COPY src/Authentication.Application/Authentication.Application.csproj src/Authentication.Application/
 COPY src/Authentication.Infrastructure/Authentication.Infrastructure.csproj src/Authentication.Infrastructure/
-COPY src/Authentication.ServiceDefaults/Authentication.ServiceDefaults.csproj src/Authentication.ServiceDefaults/
+COPY aspire/Authentication.ServiceDefaults/Authentication.ServiceDefaults.csproj aspire/Authentication.ServiceDefaults/
 RUN dotnet restore src/Authentication.Api/Authentication.Api.csproj
 
 COPY src/ src/
+COPY aspire/Authentication.ServiceDefaults/ aspire/Authentication.ServiceDefaults/
 RUN dotnet publish src/Authentication.Api/Authentication.Api.csproj \
     --configuration Release \
     --no-restore \

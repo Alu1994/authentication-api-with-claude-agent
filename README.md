@@ -26,6 +26,7 @@ src/
   Authentication.Api              Presentation: endpoints, contratos HTTP, JWT bearer, OpenAPI, health checks
   Authentication.Application      Entidade User, Commands/Queries + Handlers, regras de validacao, portas (interfaces)
   Authentication.Infrastructure   EF Core/PostgreSQL, repositorio, migrations, hasher de senha, emissao de JWT
+aspire/
   Authentication.ServiceDefaults  OpenTelemetry, health checks base, service discovery, resiliencia HTTP
   Authentication.AppHost          Aspire: PostgreSQL (container) + API
 tests/
@@ -96,8 +97,8 @@ dotnet tool restore   # dotnet-ef e reportgenerator (tools locais)
 ### Com Aspire (recomendado)
 
 ```bash
-dotnet user-secrets set "Parameters:jwt-signing-key" "<chave-com-32-ou-mais-caracteres>" --project src/Authentication.AppHost
-dotnet run --project src/Authentication.AppHost
+dotnet user-secrets set "Parameters:jwt-signing-key" "<chave-com-32-ou-mais-caracteres>" --project aspire/Authentication.AppHost
+dotnet run --project aspire/Authentication.AppHost
 ```
 
 O AppHost sobe o PostgreSQL (container com volume persistente), injeta a connection string e a chave na API

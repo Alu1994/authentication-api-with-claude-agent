@@ -8,7 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Authentication.Application\Authentication.Application.csproj" />
     <ProjectReference Include="..\Authentication.Infrastructure\Authentication.Infrastructure.csproj" />
-    <ProjectReference Include="..\Authentication.ServiceDefaults\Authentication.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\aspire\Authentication.ServiceDefaults\Authentication.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
