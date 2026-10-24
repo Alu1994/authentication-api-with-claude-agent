@@ -1,0 +1,79 @@
+### Authentication API
+# Execute as requisicoes na ordem: o cadastro e o login alimentam as variaveis usadas abaixo.
+# Ao rodar via Aspire, ajuste @baseUrl para o endpoint exibido no dashboard.
+
+@baseUrl = http://localhost:5080
+@email = fulano@example.com
+@password = Senha123
+
+### Cadastrar usuario (publico)
+# @name createUser
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Fulano de Tal",
+  "email": "{{email}}",
+  "cpf": "529.982.247-25",
+  "phone": "(11) 98765-4321",
+  "birthDate": "1990-05-10",
+  "password": "{{password}}"
+}
+
+### Login (publico) - retorna o JWT
+# Rate limiting: 5 tentativas por IP a cada 60s (padrao). Excedentes recebem 429 + Retry-After.
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+###
+@userId = {{createUser.response.body.$.id}}
+@token = {{login.response.body.$.accessToken}}
+
+### Consultar usuario por Id
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Listar usuarios (paginado, com busca opcional por nome/e-mail)
+GET {{baseUrl}}/users?page=1&pageSize=20&search=fulano
+Authorization: Bearer {{token}}
+
+### Atualizar dados cadastrais (CPF e imutavel)
+PUT {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Fulano de Tal Silva",
+  "email": "{{email}}",
+  "phone": "(11) 3333-4444",
+  "birthDate": "1990-05-10"
+}
+
+### Trocar senha
+PUT {{baseUrl}}/users/{{userId}}/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "{{password}}",
+  "newPassword": "NovaSenha456"
+}
+
+### Excluir usuario (soft delete)
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{token}}
+
+### Liveness
+GET {{baseUrl}}/heartbeat
+
+### Health check (dependencias)
+GET {{baseUrl}}/healthcheck
+
+### Documento OpenAPI
+GET {{baseUrl}}/openapi/v1.json
