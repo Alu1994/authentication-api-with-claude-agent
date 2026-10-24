@@ -1,4 +1,5 @@
 using Authentication.Application.Abstractions.Security;
+using Authentication.Application.Permissions;
 using Authentication.Application.Users;
 using Authentication.Infrastructure.Persistence;
 using Authentication.Infrastructure.Security;
@@ -30,6 +31,7 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

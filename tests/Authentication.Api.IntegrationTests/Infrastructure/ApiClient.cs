@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Authentication.Application.Auth.Login;
+using Authentication.Application.Permissions;
 using Authentication.Application.Users;
 using Authentication.Application.Users.Validation;
 
@@ -54,6 +55,20 @@ internal static class ApiClient
         var response = await client.PostAsJsonAsync("/auth/login", new { email, password }, Ct);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return (await response.Content.ReadFromJsonAsync<LoginResponse>(Ct))!.AccessToken;
+    }
+
+    /// <summary>Recurso de permissao unico por execucao (comeca com letra; apenas [a-z0-9]).</summary>
+    public static string UniqueResource() => $"r{Guid.NewGuid():N}"[..21];
+
+    public static async Task<PermissionResponse> CreatePermissionAsync(
+        this HttpClient client,
+        string resource,
+        string action = "read",
+        string? description = null)
+    {
+        var response = await client.PostAsJsonAsync("/permissions", new { resource, action, description }, Ct);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        return (await response.Content.ReadFromJsonAsync<PermissionResponse>(Ct))!;
     }
 
     /// <summary>Cadastra um usuario novo e autentica o client com o token dele.</summary>

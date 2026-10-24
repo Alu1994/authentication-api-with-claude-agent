@@ -65,6 +65,33 @@ Content-Type: application/json
   "newPassword": "NovaSenha456"
 }
 
+### Criar permissao (recurso + acao; exposta como "users:read")
+# @name createPermission
+POST {{baseUrl}}/permissions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "resource": "users",
+  "action": "read",
+  "description": "Consultar usuarios"
+}
+
+###
+@permissionId = {{createPermission.response.body.$.id}}
+
+### Consultar permissao por Id
+GET {{baseUrl}}/permissions/{{permissionId}}
+Authorization: Bearer {{token}}
+
+### Listar permissoes (paginado, filtros opcionais por recurso e acao - igualdade exata)
+GET {{baseUrl}}/permissions?page=1&pageSize=20&resource=users&action=read
+Authorization: Bearer {{token}}
+
+### Excluir permissao (soft delete; o mesmo par pode ser recriado depois)
+DELETE {{baseUrl}}/permissions/{{permissionId}}
+Authorization: Bearer {{token}}
+
 ### Excluir usuario (soft delete)
 DELETE {{baseUrl}}/users/{{userId}}
 Authorization: Bearer {{token}}
