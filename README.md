@@ -29,7 +29,7 @@ src/
   Authentication.Infrastructure   EF Core/PostgreSQL, repositorios, migrations, hasher de senha, emissao de JWT
 aspire/
   Authentication.ServiceDefaults  OpenTelemetry, health checks base, service discovery, resiliencia HTTP
-  Authentication.AppHost          Aspire: PostgreSQL (container) + API
+  Authentication.AppHost          Aspire: PostgreSQL (container) + pgAdmin + API
 tests/
   Authentication.Application.Tests     Unitarios: regras, entidade e handlers
   Authentication.Infrastructure.Tests  Unitarios: JWT, opcoes de JWT e hasher
@@ -112,7 +112,8 @@ dotnet user-secrets set "Parameters:jwt-signing-key" "<chave-com-32-ou-mais-cara
 dotnet run --project aspire/Authentication.AppHost
 ```
 
-O AppHost sobe o PostgreSQL (container com volume persistente), injeta a connection string e a chave na API
+O AppHost sobe o PostgreSQL (container com volume persistente) e o pgAdmin para inspecionar o banco
+(link no dashboard; apenas desenvolvimento local), injeta a connection string e a chave na API
 e abre o dashboard do Aspire com logs, traces e metricas (o Aspire define `OTEL_EXPORTER_OTLP_ENDPOINT`).
 Se o segredo nao estiver configurado, o dashboard pede o valor.
 
