@@ -19,7 +19,10 @@ builder.Services.AddJwtAuthentication();
 builder.Services.AddLoginRateLimiting();
 builder.Services.AddApiDocumentation();
 
-builder.Services.AddOpenTelemetry().WithTracing(tracing => tracing.AddNpgsql());
+// Npgsql publica traces (ActivitySource) e metricas (Meter "Npgsql": conexoes, comandos, pool).
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddNpgsql())
+    .WithMetrics(metrics => metrics.AddMeter("Npgsql"));
 builder.Services.AddHealthChecks().AddDbContextCheck<AuthenticationDbContext>("postgresql");
 
 var app = builder.Build();
