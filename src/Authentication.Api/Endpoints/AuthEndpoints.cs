@@ -18,7 +18,10 @@ internal static class AuthEndpoints
             .WithName("Login")
             .WithSummary("Autentica um usuario")
             .WithDescription(
-                "Valida e-mail e senha e retorna um JWT (HS256) com as claims de identidade `sub`, `email`, `name` e `jti`. " +
+                "Valida e-mail e senha e retorna um JWT (HS256) com as claims de identidade `sub`, `email`, `name` e `jti` " +
+                "e as claims de autorizacao `role` (nome de cada role ativa do usuario) e `permission` (cada permissao " +
+                "ativa dessas roles, no formato `resource:action`), emitidas como arrays e omitidas quando vazias. " +
+                "Roles e permissoes refletem o momento do login: alteracoes posteriores so aparecem em um novo login. " +
                 "Usuarios excluidos nao conseguem autenticar. Para evitar enumeracao de contas, e-mail inexistente e " +
                 "senha incorreta retornam a mesma resposta 401 (com tempo de resposta equivalente). " +
                 "Protegido por rate limiting por IP (janela fixa, padrao de 5 tentativas por 60s): excedentes " +

@@ -16,6 +16,7 @@ public class LoginCommandHandlerTests
     private readonly LoginCommandHandler _handler;
     private readonly User _user = TestData.CreateUser();
     private readonly AccessToken _token = new("jwt-token", TestData.Now.AddHours(1));
+    private readonly UserAuthorization _authorization = new(["Admin"], ["users:read", "users:update"]);
 
     public LoginCommandHandlerTests()
     {
@@ -31,7 +32,8 @@ public class LoginCommandHandlerTests
     {
         _repository.Setup(r => r.GetByEmailAsync(TestData.ValidEmail, It.IsAny<CancellationToken>())).ReturnsAsync(_user);
         _hasher.Setup(h => h.Verify(TestData.PasswordHash, TestData.ValidPassword)).Returns(PasswordVerification.Success);
-        _tokenService.Setup(t => t.CreateToken(_user)).Returns(_token);
+        _repository.Setup(r => r.GetAuthorizationAsync(_user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(_authorization);
+        _tokenService.Setup(t => t.CreateToken(_user, _authorization)).Returns(_token);
 
         var result = await _handler.HandleAsync(
             new LoginCommand(" Fulano@Example.com ", TestData.ValidPassword),
@@ -39,6 +41,7 @@ public class LoginCommandHandlerTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(new LoginResponse("jwt-token", "Bearer", _token.ExpiresAt), result.Value);
+        _tokenService.Verify(t => t.CreateToken(_user, _authorization), Times.Once);
     }
 
     [Fact]
@@ -49,7 +52,8 @@ public class LoginCommandHandlerTests
             .Returns(PasswordVerification.SuccessRehashNeeded);
         _hasher.Setup(h => h.Hash(TestData.ValidPassword)).Returns("hash-atualizado");
         _repository.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
-        _tokenService.Setup(t => t.CreateToken(_user)).Returns(_token);
+        _repository.Setup(r => r.GetAuthorizationAsync(_user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(_authorization);
+        _tokenService.Setup(t => t.CreateToken(_user, _authorization)).Returns(_token);
 
         var result = await _handler.HandleAsync(
             new LoginCommand(TestData.ValidEmail, TestData.ValidPassword),
@@ -87,7 +91,7 @@ public class LoginCommandHandlerTests
 
         _hasher.Verify(h => h.SimulateVerification(TestData.ValidPassword), Times.Once);
         _hasher.Verify(h => h.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _tokenService.Verify(t => t.CreateToken(It.IsAny<User>()), Times.Never);
+        _tokenService.Verify(t => t.CreateToken(It.IsAny<User>(), It.IsAny<UserAuthorization>()), Times.Never);
     }
 
     [Fact]

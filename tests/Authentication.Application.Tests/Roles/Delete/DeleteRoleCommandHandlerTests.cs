@@ -23,6 +23,7 @@ public class DeleteRoleCommandHandlerTests
     {
         var role = TestData.CreateRole();
         _repository.Setup(r => r.GetByIdAsync(role.Id, It.IsAny<CancellationToken>())).ReturnsAsync(role);
+        _repository.Setup(r => r.IsAssignedToActiveUserAsync(role.Id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         _repository.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
         var result = await _handler.HandleAsync(new DeleteRoleCommand(role.Id), TestContext.Current.CancellationToken);
@@ -31,6 +32,20 @@ public class DeleteRoleCommandHandlerTests
         Assert.True(role.IsDeleted);
         Assert.Equal(TestData.Now, role.DeletedAt);
         Assert.Equal(TestData.Now, role.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ReturnsConflict_WhenRoleIsAssignedToActiveUser()
+    {
+        var role = TestData.CreateRole();
+        _repository.Setup(r => r.GetByIdAsync(role.Id, It.IsAny<CancellationToken>())).ReturnsAsync(role);
+        _repository.Setup(r => r.IsAssignedToActiveUserAsync(role.Id, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        var result = await _handler.HandleAsync(new DeleteRoleCommand(role.Id), TestContext.Current.CancellationToken);
+
+        Assert.Equal(RoleErrors.InUse, result.Error);
+        Assert.False(role.IsDeleted);
+        _repository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

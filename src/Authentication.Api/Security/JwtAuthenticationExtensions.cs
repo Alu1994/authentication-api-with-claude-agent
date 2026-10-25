@@ -1,4 +1,5 @@
 using System.Text;
+using Authentication.Application.Abstractions.Security;
 using Authentication.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
@@ -32,6 +33,7 @@ internal static class JwtAuthenticationExtensions
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromSeconds(30),
                     NameClaimType = JwtRegisteredClaimNames.Name,
+                    RoleClaimType = AuthorizationClaimTypes.Role,
                 };
             });
 

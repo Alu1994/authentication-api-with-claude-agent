@@ -19,6 +19,12 @@ public interface IRoleRepository
 
     void Add(Role role);
 
+    /// <summary>Indica se a role esta atribuida a algum usuario ativo (nao excluido).</summary>
+    Task<bool> IsAssignedToActiveUserAsync(Guid roleId, CancellationToken cancellationToken);
+
+    /// <summary>Dentre os Ids informados, retorna os que correspondem a roles ativas.</summary>
+    Task<IReadOnlySet<Guid>> GetActiveIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     /// <summary>Busca o vinculo entre a role e a permissao, independentemente de a permissao estar ativa.</summary>
     Task<RolePermission?> GetPermissionLinkAsync(Guid roleId, Guid permissionId, CancellationToken cancellationToken);
 

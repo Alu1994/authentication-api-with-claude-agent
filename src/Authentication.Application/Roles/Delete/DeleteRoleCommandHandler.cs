@@ -18,6 +18,12 @@ public sealed partial class DeleteRoleCommandHandler(
             return RoleErrors.NotFound;
         }
 
+        if (await repository.IsAssignedToActiveUserAsync(role.Id, cancellationToken))
+        {
+            LogDeleteRejectedInUse(logger, role.Id);
+            return RoleErrors.InUse;
+        }
+
         role.Delete(timeProvider.GetUtcNow());
         await repository.SaveChangesAsync(cancellationToken);
 
@@ -27,4 +33,8 @@ public sealed partial class DeleteRoleCommandHandler(
 
     [LoggerMessage(EventId = 4201, Level = LogLevel.Information, Message = "Role {RoleId} excluida (soft delete).")]
     private static partial void LogRoleDeleted(ILogger logger, Guid roleId);
+
+    [LoggerMessage(EventId = 4202, Level = LogLevel.Warning,
+        Message = "Exclusao da role {RoleId} rejeitada: atribuida a usuarios ativos.")]
+    private static partial void LogDeleteRejectedInUse(ILogger logger, Guid roleId);
 }

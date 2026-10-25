@@ -57,6 +57,13 @@ public class PlatformEndpointsTests(ApiFactory factory)
         Assert.True(paths.TryGetProperty("/roles/{id}/permissions/{permissionId}", out var rolePermission));
         Assert.True(rolePermission.TryGetProperty("post", out _));
         Assert.True(rolePermission.TryGetProperty("delete", out _));
+        Assert.True(roleById.GetProperty("delete").GetProperty("responses").TryGetProperty("409", out _));
+        Assert.True(paths.TryGetProperty("/users/{id}/roles", out var userRoles));
+        Assert.True(userRoles.TryGetProperty("get", out _));
+        Assert.True(userRoles.GetProperty("put").TryGetProperty("security", out _));
+        Assert.True(paths.TryGetProperty("/users/{id}/roles/{roleId}", out var userRole));
+        Assert.True(userRole.TryGetProperty("post", out _));
+        Assert.True(userRole.TryGetProperty("delete", out _));
         Assert.False(paths.TryGetProperty("/heartbeat", out _));
 
         var schemes = json.RootElement.GetProperty("components").GetProperty("securitySchemes");

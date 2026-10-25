@@ -10,6 +10,9 @@ public static class RoleErrors
     public static readonly Error NameInUse =
         Error.Conflict("role.name_in_use", "Ja existe uma role ativa com este nome.");
 
+    public static readonly Error InUse =
+        Error.Conflict("role.in_use", "A role esta atribuida a um ou mais usuarios ativos.");
+
     public static readonly Error PermissionNotLinked =
         Error.NotFound("role.permission_not_linked", "A permissao nao esta vinculada a esta role.");
 }

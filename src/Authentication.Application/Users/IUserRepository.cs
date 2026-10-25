@@ -1,4 +1,6 @@
 using Authentication.Application.Abstractions.Paging;
+using Authentication.Application.Abstractions.Security;
+using Authentication.Application.Roles;
 
 namespace Authentication.Application.Users;
 
@@ -25,6 +27,25 @@ public interface IUserRepository
     Task<PagedResponse<User>> ListAsync(int page, int pageSize, string? search, CancellationToken cancellationToken);
 
     void Add(User user);
+
+    /// <summary>Busca o vinculo entre o usuario e a role, independentemente de a role estar ativa.</summary>
+    Task<UserRole?> GetRoleLinkAsync(Guid userId, Guid roleId, CancellationToken cancellationToken);
+
+    /// <summary>Todos os vinculos do usuario (inclusive com roles excluidas).</summary>
+    Task<IReadOnlyList<UserRole>> GetRoleLinksAsync(Guid userId, CancellationToken cancellationToken);
+
+    void AddRoleLink(UserRole link);
+
+    void RemoveRoleLink(UserRole link);
+
+    /// <summary>Roles ativas atribuidas ao usuario, ordenadas por nome.</summary>
+    Task<IReadOnlyList<Role>> ListActiveRolesAsync(Guid userId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Nomes das roles ativas do usuario e permissoes ativas distintas (<c>resource:action</c>) dessas roles,
+    /// ambos ordenados. Usado para emitir as claims de autorizacao no login.
+    /// </summary>
+    Task<UserAuthorization> GetAuthorizationAsync(Guid userId, CancellationToken cancellationToken);
 
     /// <summary>Persiste as alteracoes.</summary>
     /// <exception cref="Abstractions.Persistence.UniqueConstraintViolationException">
