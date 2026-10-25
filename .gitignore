@@ -15,10 +15,22 @@ coverage*/
 # IDEs
 .vs/
 .vscode/
-.idea/
 *.user
 *.suo
 *.DotSettings.user
+
+# JetBrains Rider: versiona so o que e compartilhavel entre maquinas (run configurations
+# marcadas como "Store as project file", nome do projeto, vcs.xml). Estado por maquina/sessao
+# (workspace.xml, caches, datasources locais, etc.) fica de fora.
+.idea/*
+!.idea/*/
+.idea/*/*
+!.idea/*/.idea/
+.idea/*/.idea/*
+!.idea/*/.idea/runConfigurations/
+!.idea/*/.idea/runConfigurations/*
+!.idea/*/.idea/.name
+!.idea/*/.idea/vcs.xml
 
 # Segredos / configuracoes locais
 .env
