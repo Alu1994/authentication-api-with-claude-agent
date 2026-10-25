@@ -5,9 +5,12 @@ var builder = DistributedApplication.CreateBuilder(args);
 // ou pelo prompt do dashboard do Aspire. Nunca versionar.
 var jwtSigningKey = builder.AddParameter("jwt-signing-key", secret: true);
 
+// pgAdmin: UI de administracao do Postgres, apenas para desenvolvimento local
+// (nao entra no manifesto de deploy). Persistente como o proprio Postgres.
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume()
-    .WithLifetime(ContainerLifetime.Persistent);
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithPgAdmin(pgAdmin => pgAdmin.WithLifetime(ContainerLifetime.Persistent));
 
 var authDb = postgres.AddDatabase("authdb");
 
