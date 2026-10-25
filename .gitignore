@@ -25,6 +25,9 @@ coverage*/
 .env.*
 **/appsettings.Local.json
 *.pfx
+# Certificados de CA de rede/proxy (especificos de cada maquina; ver README > Docker)
+*.crt
+*.pem
 
 # Rascunho local do agente (memoria de execucao e relatorios de cobertura)
 .claude/epics/
