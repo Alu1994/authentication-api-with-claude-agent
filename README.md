@@ -163,6 +163,20 @@ docker run -p 8080:8080 \
 A imagem roda como usuario nao-root na porta 8080. Probes sugeridos:
 `livenessProbe` -> `/heartbeat`, `readinessProbe` -> `/healthcheck`.
 
+### Build atras de proxy ou antivirus que inspeciona HTTPS
+
+Proxies corporativos e antivirus que inspecionam HTTPS substituem o certificado dos sites por um emitido
+pela propria CA. A maquina confia nessa CA, mas o container de build nao, e o restore falha com
+`NU1301` (erro de certificado/cadeia). Nesses ambientes, informe a CA raiz (PEM) no build arg opcional
+`CORPORATE_CA_CERT`; ela e confiada apenas durante o build, e a imagem final nao muda:
+
+```bash
+docker build --build-arg CORPORATE_CA_CERT="$(cat minha-ca.crt)" -f src/Authentication.Api/Dockerfile -t authentication-api .
+```
+
+No PowerShell, use `--build-arg CORPORATE_CA_CERT="$(Get-Content minha-ca.crt -Raw)"`. O certificado e
+especifico da rede de cada maquina e nao deve ser versionado.
+
 ## Testes e cobertura
 
 ```bash

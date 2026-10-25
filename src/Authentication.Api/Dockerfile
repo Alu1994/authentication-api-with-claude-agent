@@ -4,6 +4,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+# Opcional: CA raiz adicional (conteudo PEM) para redes cujo proxy/antivirus inspeciona HTTPS e
+# faria o restore falhar com NU1301. Vazio por padrao (nenhuma mudanca). Afeta apenas este estagio de
+# build; a imagem final nao recebe o certificado. Ex.:
+#   docker build --build-arg CORPORATE_CA_CERT="$(cat minha-ca.crt)" -f src/Authentication.Api/Dockerfile .
+ARG CORPORATE_CA_CERT=""
+RUN if [ -n "$CORPORATE_CA_CERT" ]; then \
+        printf '%s\n' "$CORPORATE_CA_CERT" | tr -d '\r' > /usr/local/share/ca-certificates/corporate-ca.crt \
+        && openssl x509 -in /usr/local/share/ca-certificates/corporate-ca.crt -noout \
+           || { echo "CORPORATE_CA_CERT nao contem um certificado PEM valido." >&2; exit 1; } \
+        && update-ca-certificates; \
+    fi
+
 # Restore em camada separada para aproveitar cache.
 COPY global.json Directory.Build.props Directory.Packages.props ./
 COPY src/Authentication.Api/Authentication.Api.csproj src/Authentication.Api/
