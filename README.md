@@ -116,6 +116,13 @@ O AppHost sobe o PostgreSQL (container com volume persistente), injeta a connect
 e abre o dashboard do Aspire com logs, traces e metricas (o Aspire define `OTEL_EXPORTER_OTLP_ENDPOINT`).
 Se o segredo nao estiver configurado, o dashboard pede o valor.
 
+**Problema conhecido (Windows):** se o dashboard nao abrir, ou abrir sem receber telemetria, e o orquestrador
+do Aspire (DCP) falhar com `x509: certificate signed by unknown authority`, normalmente ha interferencia no
+certificado de desenvolvimento (certificados `localhost` duplicados ou antivirus com inspecao HTTPS).
+Contorno: defina `ASPIRE_DCP_USE_DEVELOPER_CERTIFICATE=false` no ambiente do AppHost (variavel de ambiente
+ou run configuration da IDE), para o DCP usar um certificado proprio. Correcao definitiva: limpar e
+reconfiar o certificado (`dotnet dev-certs https --clean` e depois `dotnet dev-certs https --trust`).
+
 ### Somente a API
 
 ```bash
